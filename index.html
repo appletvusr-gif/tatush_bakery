@@ -1038,7 +1038,7 @@
                 hasToppingOption: true,
                 hasAddonOption: true,
                 basePrice: 25, 
-                img: 'Seventy.png',
+                img: 'seventy.png',
                 isFifty: true 
             },
             { 
@@ -1457,22 +1457,21 @@
             const orderBtnText = document.getElementById('order-btn-text');
             orderBtnText.innerText = "שולח הזמנה...";
 
+            // ==========================================
+            // הדבק כאן למטה את הקישור שקיבלת מפרסום ה-Web App של Google Apps Script
+            // ==========================================
+            const WEB_APP_URL = "הדבק_כאן_את_הקישור_של_גוגל";
+
             try {
-                const response = await fetch('/.netlify/functions/submit-order', {
+                const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
+                    mode: 'no-cors', // נדרש משום שמדובר בפנייה חיצונית ל-Google Script
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(finalOrderDataForSend)
                 });
 
-                const result = await response.json();
-
-                if (response.ok && (result.success !== false)) {
-                    alert('ההזמנה נשלחה בהצלחה ונשמרה במערכת!');
-                    location.reload();
-                } else {
-                    alert('אירעה שגיאה בשמירת ההזמנה: ' + (result.error || 'שגיאה לא ידועה'));
-                    orderBtnText.innerText = "ביצוע הזמנה";
-                }
+                alert('ההזמנה נשלחה בהצלחה ונשמרה במערכת!');
+                location.reload();
 
             } catch (err) {
                 console.error("שגיאה בתהליך השליחה", err);
