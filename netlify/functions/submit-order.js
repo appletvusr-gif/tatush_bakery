@@ -11,11 +11,19 @@ exports.handler = async function(event, context) {
         const JSONBIN_ID = process.env.JSONBIN_ID;
         const JSONBIN_KEY = process.env.JSONBIN_KEY;
 
+        // בניית מחרוזת ההערות להודעה במידה וקיימות
+        let notesSection = '';
+        if (orderData.notes && orderData.notes.trim() !== '') {
+            notesSection = `📝 הערות: ${orderData.notes}\n`;
+        }
+
         // 1. שליחת הודעה לטלגרם
         const orderText = `🚨 הזמנה חדשה התקבלה!\n\n` +
                           `👤 שם: ${orderData.name}\n` +
                           `📞 טלפון: ${orderData.phone}\n` +
                           `🏠 כתובת: ${orderData.address}\n` +
+                          `💳 אמצעי תשלום: ${orderData.payment}\n` +
+                          notesSection +
                           `📅 מועד: ${orderData.slot}\n` +
                           `🛒 פריטים:\n- ${orderData.items.join('\n- ')}\n\n` +
                           `💰 סה"כ: ₪${orderData.total}\n` +
