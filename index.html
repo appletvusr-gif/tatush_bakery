@@ -679,7 +679,7 @@
             color: #c0392b;
         }
 
-        .form-group input, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             padding: 10px 14px;
             border-radius: var(--radius-sm);
             border: 1px solid var(--border-color);
@@ -690,9 +690,21 @@
             transition: border-color 0.2s, background 0.2s;
         }
 
-        .form-group input:focus, .form-group select:focus {
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
             border-color: var(--accent);
             background: #FFFFFF;
+        }
+
+        .char-counter {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-align: left;
+            margin-top: 2px;
         }
 
         .field-error-msg {
@@ -952,6 +964,11 @@
                         <option value="מזומן בעת המסירה/איסוף">מזומן בעת המסירה/איסוף</option>
                     </select>
                 </div>
+                <div class="form-group full-width">
+                    <label for="cust-notes">הערות להזמנה (אופציונלי)</label>
+                    <textarea id="cust-notes" maxlength="250" placeholder="הכנס הערות לשליח, שעות מועדפות וכו' (עד 250 תווים)" oninput="handleNotesInput()"></textarea>
+                    <div class="char-counter"><span id="notes-char-count">0</span> / 250 תווים</div>
+                </div>
             </div>
         </section>
 
@@ -1203,6 +1220,13 @@
             updateSummary();
         }
 
+        function handleNotesInput() {
+            const notesInput = document.getElementById('cust-notes');
+            const charCount = document.getElementById('notes-char-count');
+            charCount.innerText = notesInput.value.length;
+            updateSummary();
+        }
+
         function formatDate(date) {
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -1327,6 +1351,7 @@
             const custPhone = document.getElementById('cust-phone').value.trim();
             const custAddress = document.getElementById('cust-address').value.trim();
             const custPayment = document.getElementById('cust-payment').value;
+            const custNotes = document.getElementById('cust-notes').value.trim();
 
             let isPhoneValid = true;
             if (custPhone !== '') {
@@ -1399,6 +1424,7 @@
                     phone: custPhone,
                     address: custAddress,
                     payment: custPayment,
+                    notes: custNotes,
                     slot: `${selectedSlot.dayTitle} (${selectedSlot.dateFormatted})`,
                     items: fullOrderDetailsArray,
                     total: totalCost,
