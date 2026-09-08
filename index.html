@@ -1233,13 +1233,80 @@
             return `${day}.${month}`;
         }
 
-        function getNextDayOfWeek(baseDate, dayOfWeek) {
-            const date = new Date(baseDate.getTime());
-            const currentDay = date.getDay();
-            let distance = (dayOfWeek - currentDay + 7) % 7;
-            if (distance === 0) distance = 7;
+        // רשימת חגים וערבי חג (תשפ"ז / 2026-2027)
+        const holidaysList = [
+            '2026-09-10', // ערב ראש השנה
+            '2026-09-11', // ראש השנה א'
+            '2026-09-12', // ראש השנה ב'
+            '2026-09-19', // ערב יום כיפור
+            '2026-09-20', // יום כיפור
+            '2026-09-24', // ערב סוכות
+            '2026-09-25', // סוכות א'
+            '2026-10-01', // ערב שמיני עצרת / שמחת תורה
+            '2026-10-02', // שמחת תורה
+            '2027-03-22', // ערב פורים
+            '2027-03-23', // פורים
+            '2027-04-20', // ערב פסח
+            '2027-04-21', // פסח א'
+            '2027-04-26', // ערב שביעי של פסח
+            '2027-04-27', // שביעי של פסח
+            '2027-05-11', // ערב יום העצמאות
+            '2027-05-12', // יום העצמאות
+            '2027-06-09', // ערב שבועות
+            '2027-06-10'  // שבועות
+        ];
+
+        function isYomKippurOrEve(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
+            return formattedDate === '2026-09-19' || formattedDate === '2026-09-20';
+        }
+
+        // בדיקה האם היום הוא מוצאי יום כיפור (היום שלמחרת יום כיפור)
+        function isMotzeiYomKippur(dateObj) {
+            let dPrev = new Date(dateObj);
+            dPrev.setDate(dPrev.getDate() - 1);
+            const year = dPrev.getFullYear();
+            const month = String(dPrev.getMonth() + 1).padStart(2, '0');
+            const day = String(dPrev.getDate()).padStart(2, '0');
+            const prevFormatted = `${year}-${month}-${day}`;
+            // יום כיפור חל ב-2026-09-20, לכן מוצאי יום כיפור יהיה ב-2026-09-21 (או תאריכים עתידיים בהתאמה)
+            return prevFormatted === '2026-09-20';
+        }
+
+        function isHolidayOrEve(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
+            return holidaysList.includes(formattedDate);
+        }
+
+        // בדיקה האם תאריך הוא מוצאי חג (היום שאחרי חג או אחרי ערב חג שבו מסתיים החג)
+        function isMotzeiHoliday(dateObj) {
+            let dPrev = new Date(dateObj);
+            dPrev.setDate(dPrev.getDate() - 1);
+            return isHolidayOrEve(dPrev) && !isYomKippurOrEve(dPrev);
+        }
+
+        // חיפוש המועד הפנוי הבא לפי ימי ראשון(0), שלישי(2), חמישי(4) תוך דילוג על חגים
+        function getNextValidDay(startDate, targetDayOfWeek) {
+            let date = new Date(startDate.getTime());
+            
+            let currentDay = date.getDay();
+            let distance = (targetDayOfWeek - currentDay + 7) % 7;
+            if (distance === 0) {
+                distance = 7;
+            }
             date.setDate(date.getDate() + distance);
             date.setHours(0, 0, 0, 0);
+
+            while (isHolidayOrEve(date) || isYomKippurOrEve(date) || isMotzeiYomKippur(date)) {
+                date.setDate(date.getDate() + 7);
+            }
+
             return date;
         }
 
@@ -1247,9 +1314,9 @@
             const now = new Date();
             const slots = [];
 
-            let sun1 = getNextDayOfWeek(now, 0);
-            let tue1 = getNextDayOfWeek(now, 2);
-            let thu1 = getNextDayOfWeek(now, 4);
+            let sun1 = getNextValidDay(now, 0);
+            let tue1 = getNextValidDay(now, 2);
+            let thu1 = getNextValidDay(now, 4);
 
             let sunDeadline = new Date(sun1);
             sunDeadline.setDate(sunDeadline.getDate() - 3);
@@ -1263,29 +1330,63 @@
             thuDeadline.setDate(thuDeadline.getDate() - 2);
             thuDeadline.setHours(18, 0, 0, 0);
 
-            const potentialSlots = [
+            let sun2 = getNextValidDay(sun1, 0);
+            let tue2 = getNextValidDay(tue1, 2);
+            let thu2 = getNextValidDay(thu1, 4);
+
+            let sunDeadline2 = new Date(sun2);
+            sunDeadline2.setDate(sunDeadline2.getDate() - 3);
+            sunDeadline2.setHours(21, 0, 0, 0);
+
+            let tueDeadline2 = new Date(tue2);
+            tueDeadline2.setDate(tueDeadline2.getDate() - 2);
+            tueDeadline2.setHours(18, 0, 0, 0);
+
+            let thuDeadline2 = new Date(thu2);
+            thuDeadline2.setDate(thuDeadline2.getDate() - 2);
+            thuDeadline2.setHours(18, 0, 0, 0);
+
+            let potentialSlots = [
                 { date: sun1, deadline: sunDeadline, title: "יום ראשון" },
                 { date: tue1, deadline: tueDeadline, title: "יום שלישי" },
                 { date: thu1, deadline: thuDeadline, title: "יום חמישי" },
-                { date: new Date(sun1.getTime() + 7*24*60*60*1000), deadline: new Date(sunDeadline.getTime() + 7*24*60*60*1000), title: "יום ראשון (שבוע הבא)" },
-                { date: new Date(tue1.getTime() + 7*24*60*60*1000), deadline: new Date(tueDeadline.getTime() + 7*24*60*60*1000), title: "יום שלישי (שבוע הבא)" },
-                { date: new Date(thu1.getTime() + 7*24*60*60*1000), deadline: new Date(thuDeadline.getTime() + 7*24*60*60*1000), title: "יום חמישי (שבוע הבא)" }
+                { date: sun2, deadline: sunDeadline2, title: "יום ראשון (שבוע הבא)" },
+                { date: tue2, deadline: tueDeadline2, title: "יום שלישי (שבוע הבא)" },
+                { date: thu2, deadline: thuDeadline2, title: "יום חמישי (שבוע הבא)" }
             ];
+
+            // סינון סופי של יום כיפור, ערב יום כיפור ומוצאי יום כיפור
+            potentialSlots = potentialSlots.filter(item => !isYomKippurOrEve(item.date) && !isMotzeiYomKippur(item.date));
 
             potentialSlots.sort((a, b) => a.date - b.date);
 
             potentialSlots.forEach((item, index) => {
                 const isOpen = now < item.deadline;
+                
+                // בדיקה האם מדובר במוצאי חג לקביעת שעות האיסוף המותאמות
+                const isMotzeiH = isMotzeiHoliday(item.date);
+                const tagText = slotTagText(isOpen, isMotzeiH);
+
                 slots.push({
                     id: `slot-${index}`,
                     bakingDate: item.date,
                     dayTitle: item.title,
                     dateFormatted: formatDate(item.date),
-                    isOpen: isOpen
+                    isOpen: isOpen,
+                    isMotzeiHoliday: isMotzeiH,
+                    tagText: tagText
                 });
             });
 
             return slots.slice(0, 4);
+        }
+
+        function slotTagText(isOpen, isMotzeiH) {
+            if (!isOpen) return "ההרשמה נסגרה";
+            if (isMotzeiH) {
+                return "איסוף/חלוקה בתיאום בין השעות 20:00-22:00 (מוצאי חג)";
+            }
+            return "איסוף/חלוקה בתיאום בין השעות 18:00-20:00";
         }
 
         function renderSlots() {
@@ -1300,12 +1401,10 @@
                 btn.className = `baking-btn ${slot.isOpen ? 'available' : 'disabled'}`;
                 btn.id = slot.id;
 
-                const tagText = slot.isOpen ? "איסוף/חלוקה בתיאום בין השעות 18:00-20:00" : "ההרשמה נסגרה";
-
                 btn.innerHTML = `
                     <div class="baking-day">${slot.dayTitle}</div>
                     <div class="baking-date">${slot.dateFormatted}</div>
-                    <span class="baking-tag">${tagText}</span>
+                    <span class="baking-tag">${slot.tagText}</span>
                 `;
 
                 if (slot.isOpen) {
@@ -1457,15 +1556,12 @@
             const orderBtnText = document.getElementById('order-btn-text');
             orderBtnText.innerText = "שולח הזמנה...";
 
-            // ==========================================
-            // הדבק כאן למטה את הקישור שקיבלת מפרסום ה-Web App של Google Apps Script
-            // ==========================================
             const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxK0q15bcJ7d4_k60HqpTWi7ljiPEWs03Vu0COeyB4mZ5QTVOpyuny8g7FIGyWe-c2i0g/exec";
 
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // נדרש משום שמדובר בפנייה חיצונית ל-Google Script
+                    mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(finalOrderDataForSend)
                 });
