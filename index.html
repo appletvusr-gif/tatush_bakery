@@ -80,6 +80,29 @@
             background: linear-gradient(90deg, var(--primary), var(--accent));
         }
 
+        .header-top-contact {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 16px;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .header-top-contact a, .header-top-contact span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary-dark);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .header-top-contact a:hover {
+            color: var(--accent);
+        }
+
         .icon-badge {
             width: 190px;
             height: 190px;
@@ -850,6 +873,10 @@
             .form-grid {
                 grid-template-columns: 1fr;
             }
+            .header-top-contact {
+                flex-direction: column;
+                gap: 8px;
+            }
         }
     </style>
 </head>
@@ -858,6 +885,10 @@
     <div class="container">
 
         <header class="header-card">
+            <div class="header-top-contact">
+                <a href="tel:0552493577"><i class="fa-solid fa-phone"></i> 055-2493577</a>
+                <a href="https://www.instagram.com/tatushhh_bakery?stkn=MTY5M2o4eWY2Z3ZucA==" target="_blank"><i class="fa-brands fa-instagram"></i> אינסטגרם</a>
+            </div>
             <div class="icon-badge">
                 <img src="title.png" alt="לוגו טאטוש לחמים - אפייה ביתית, מחמצת כפרית. Tatushhh Bakery.">
             </div>
@@ -994,7 +1025,7 @@
 
         <footer>
             <div class="social-links">
-                <a href="#" title="אינסטגרם"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://www.instagram.com/tatushhh_bakery?stkn=MTY5M2o4eWY2Z3ZucA==" target="_blank" title="אינסטגרם"><i class="fa-brands fa-instagram"></i></a>
                 <a href="#" title="פייסבוק"><i class="fa-brands fa-facebook"></i></a>
             </div>
             <p>© כל הזכויות שמורות - טאטוש לחמים | כפר סבא</p>
@@ -1264,7 +1295,6 @@
             return formattedDate === '2026-09-19' || formattedDate === '2026-09-20';
         }
 
-        // בדיקה האם היום הוא מוצאי יום כיפור (היום שלמחרת יום כיפור)
         function isMotzeiYomKippur(dateObj) {
             let dPrev = new Date(dateObj);
             dPrev.setDate(dPrev.getDate() - 1);
@@ -1272,7 +1302,6 @@
             const month = String(dPrev.getMonth() + 1).padStart(2, '0');
             const day = String(dPrev.getDate()).padStart(2, '0');
             const prevFormatted = `${year}-${month}-${day}`;
-            // יום כיפור חל ב-2026-09-20, לכן מוצאי יום כיפור יהיה ב-2026-09-21 (או תאריכים עתידיים בהתאמה)
             return prevFormatted === '2026-09-20';
         }
 
@@ -1284,14 +1313,12 @@
             return holidaysList.includes(formattedDate);
         }
 
-        // בדיקה האם תאריך הוא מוצאי חג (היום שאחרי חג או אחרי ערב חג שבו מסתיים החג)
         function isMotzeiHoliday(dateObj) {
             let dPrev = new Date(dateObj);
             dPrev.setDate(dPrev.getDate() - 1);
             return isHolidayOrEve(dPrev) && !isYomKippurOrEve(dPrev);
         }
 
-        // חיפוש המועד הפנוי הבא לפי ימי ראשון(0), שלישי(2), חמישי(4) תוך דילוג על חגים
         function getNextValidDay(startDate, targetDayOfWeek) {
             let date = new Date(startDate.getTime());
             
@@ -1355,15 +1382,12 @@
                 { date: thu2, deadline: thuDeadline2, title: "יום חמישי (שבוע הבא)" }
             ];
 
-            // סינון סופי של יום כיפור, ערב יום כיפור ומוצאי יום כיפור
             potentialSlots = potentialSlots.filter(item => !isYomKippurOrEve(item.date) && !isMotzeiYomKippur(item.date));
 
             potentialSlots.sort((a, b) => a.date - b.date);
 
             potentialSlots.forEach((item, index) => {
                 const isOpen = now < item.deadline;
-                
-                // בדיקה האם מדובר במוצאי חג לקביעת שעות האיסוף המותאמות
                 const isMotzeiH = isMotzeiHoliday(item.date);
                 const tagText = slotTagText(isOpen, isMotzeiH);
 
