@@ -1264,27 +1264,11 @@
             return `${day}.${month}`;
         }
 
-        // רשימת חגים וערבי חג (תשפ"ז / 2026-2027)
         const holidaysList = [
-            '2026-09-10', // ערב ראש השנה
-            '2026-09-11', // ראש השנה א'
-            '2026-09-12', // ראש השנה ב'
-            '2026-09-19', // ערב יום כיפור
-            '2026-09-20', // יום כיפור
-            '2026-09-24', // ערב סוכות
-            '2026-09-25', // סוכות א'
-            '2026-10-01', // ערב שמיני עצרת / שמחת תורה
-            '2026-10-02', // שמחת תורה
-            '2027-03-22', // ערב פורים
-            '2027-03-23', // פורים
-            '2027-04-20', // ערב פסח
-            '2027-04-21', // פסח א'
-            '2027-04-26', // ערב שביעי של פסח
-            '2027-04-27', // שביעי של פסח
-            '2027-05-11', // ערב יום העצמאות
-            '2027-05-12', // יום העצמאות
-            '2027-06-09', // ערב שבועות
-            '2027-06-10'  // שבועות
+            '2026-09-10', '2026-09-11', '2026-09-12', '2026-09-19', '2026-09-20',
+            '2026-09-24', '2026-09-25', '2026-10-01', '2026-10-02', '2027-03-22',
+            '2027-03-23', '2027-04-20', '2027-04-21', '2027-04-26', '2027-04-27',
+            '2027-05-11', '2027-05-12', '2027-06-09', '2027-06-10'
         ];
 
         function isYomKippurOrEve(dateObj) {
@@ -1321,19 +1305,15 @@
 
         function getNextValidDay(startDate, targetDayOfWeek) {
             let date = new Date(startDate.getTime());
-            
             let currentDay = date.getDay();
             let distance = (targetDayOfWeek - currentDay + 7) % 7;
-            if (distance === 0) {
-                distance = 7;
-            }
+            if (distance === 0) distance = 7;
             date.setDate(date.getDate() + distance);
             date.setHours(0, 0, 0, 0);
 
             while (isHolidayOrEve(date) || isYomKippurOrEve(date) || isMotzeiYomKippur(date)) {
                 date.setDate(date.getDate() + 7);
             }
-
             return date;
         }
 
@@ -1383,7 +1363,6 @@
             ];
 
             potentialSlots = potentialSlots.filter(item => !isYomKippurOrEve(item.date) && !isMotzeiYomKippur(item.date));
-
             potentialSlots.sort((a, b) => a.date - b.date);
 
             potentialSlots.forEach((item, index) => {
@@ -1407,9 +1386,7 @@
 
         function slotTagText(isOpen, isMotzeiH) {
             if (!isOpen) return "ההרשמה נסגרה";
-            if (isMotzeiH) {
-                return "איסוף/חלוקה בתיאום בין השעות 20:00-22:00 (מוצאי חג)";
-            }
+            if (isMotzeiH) return "איסוף/חלוקה בתיאום בין השעות 20:00-22:00 (מוצאי חג)";
             return "איסוף/חלוקה בתיאום בין השעות 18:00-20:00";
         }
 
@@ -1446,11 +1423,9 @@
 
         function selectSlot(slot) {
             selectedSlot = slot;
-
             document.querySelectorAll('.baking-btn').forEach(btn => btn.classList.remove('active'));
             const activeBtn = document.getElementById(slot.id);
             if (activeBtn) activeBtn.classList.add('active');
-
             updateSummary();
         }
 
@@ -1541,8 +1516,21 @@
 
             if (totalCount > 0 && selectedSlot && isFormValid) {
                 const orderDateStr = new Date().toLocaleString('he-IL');
+                
+                // --- הגדרת מספר סידורי התחלתי מתחיל מ-311 ---
+                const startSequenceNumber = 311; 
+                let currentSeq = localStorage.getItem('tatush_last_order_seq');
+                if (!currentSeq) {
+                    currentSeq = startSequenceNumber;
+                } else {
+                    currentSeq = parseInt(currentSeq) + 1;
+                }
+                localStorage.setItem('tatush_last_order_seq', currentSeq);
+                
+                const customOrderId = `ORD-${currentSeq}`;
+
                 finalOrderDataForSend = {
-                    orderId: 'ORD-' + Date.now(),
+                    orderId: customOrderId,
                     name: custName,
                     phone: custPhone,
                     address: custAddress,
@@ -1581,6 +1569,7 @@
             orderBtnText.innerText = "שולח הזמנה...";
 
             const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxK0q15bcJ7d4_k60HqpTWi7ljiPEWs03Vu0COeyB4mZ5QTVOpyuny8g7FIGyWe-c2i0g/exec";
+            const currentOrderId = finalOrderDataForSend.orderId;
 
             try {
                 const response = await fetch(WEB_APP_URL, {
@@ -1590,12 +1579,12 @@
                     body: JSON.stringify(finalOrderDataForSend)
                 });
 
-                alert('ההזמנה נשלחה בהצלחה ונשמרה במערכת!');
+                alert(`ההזמנה נשלחה בהצלחה!\nמספר הזמנה סידורי: ${currentOrderId}`);
                 location.reload();
 
             } catch (err) {
                 console.error("שגיאה בתהליך השליחה", err);
-                alert('שגיאה בתקשורת עם השרת.');
+                alert('שגיאה בתקשורת עם השרשת.');
                 orderBtnText.innerText = "ביצוע הזמנה";
             }
         }
